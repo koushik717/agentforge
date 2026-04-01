@@ -1,120 +1,122 @@
 services:
-  # -- PostgreSQL (internal only) -----------------------------------------
-  postgres:
+  agentforge-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentforge-api
+    ports:
+      - "8002:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://agentforge:agentforge123@agentforge-postgres:5432/agentforge
+      REDIS_URL: redis://agentforge-redis:6379
+      ENVIRONMENT: production
+    depends_on:
+      agentforge-postgres:
+        condition: service_healthy
+      agentforge-redis:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2
+    restart: unless-stopped
+    networks:
+      - agentforge-net
+
+  agentforge-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentforge-worker
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://agentforge:agentforge123@agentforge-postgres:5432/agentforge
+      REDIS_URL: redis://agentforge-redis:6379
+      ENVIRONMENT: production
+    depends_on:
+      agentforge-postgres:
+        condition: service_healthy
+      agentforge-redis:
+        condition: service_healthy
+    command: python -m runtime.worker
+    restart: unless-stopped
+    networks:
+      - agentforge-net
+
+  agentforge-postgres:
     image: postgres:16-alpine
     container_name: agentforge-postgres
-    restart: unless-stopped
     environment:
-      POSTGRES_USER: agentforge
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agentforge_prod_2026}
       POSTGRES_DB: agentforge
+      POSTGRES_USER: agentforge
+      POSTGRES_PASSWORD: agentforge123
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - agentforge_postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U agentforge"]
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+    networks:
+      - agentforge-net
 
-  # -- Redis (internal only) ----------------------------------------------
-  redis:
+  agentforge-redis:
     image: redis:7-alpine
     container_name: agentforge-redis
-    restart: unless-stopped
     volumes:
-      - redisdata:/data
+      - agentforge_redis:/data
     command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
-      timeout: 5s
+      timeout: 3s
       retries: 5
-
-  # -- AgentForge API -----------------------------------------------------
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: agentforge-api
     restart: unless-stopped
-    ports:
-      - "8002:8000"
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgresql://agentforge:${POSTGRES_PASSWORD:-agentforge_prod_2026}@postgres:5432/agentforge
-      REDIS_URL: redis://redis:6379
-      ENVIRONMENT: production
-      LOG_LEVEL: INFO
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python", "-c", "import httpx; r = httpx.get('http://localhost:8000/api/v1/health'); assert r.status_code == 200"]
-      interval: 15s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
+    networks:
+      - agentforge-net
 
-  # -- Background Worker ---------------------------------------------------
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: agentforge-worker
-    restart: unless-stopped
-    command: ["python", "-m", "runtime.worker"]
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgresql://agentforge:${POSTGRES_PASSWORD:-agentforge_prod_2026}@postgres:5432/agentforge
-      REDIS_URL: redis://redis:6379
-      ENVIRONMENT: production
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  # -- Prometheus ----------------------------------------------------------
-  prometheus:
-    image: prom/prometheus:v2.51.0
+  agentforge-prometheus:
+    image: prom/prometheus:latest
     container_name: agentforge-prometheus
-    restart: unless-stopped
     ports:
       - "9091:9090"
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheusdata:/prometheus
+      - agentforge_prometheus:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
     depends_on:
-      - api
-
-  # -- Grafana -------------------------------------------------------------
-  grafana:
-    image: grafana/grafana:10.4.0
-    container_name: agentforge-grafana
+      - agentforge-api
     restart: unless-stopped
+    networks:
+      - agentforge-net
+
+  agentforge-grafana:
+    image: grafana/grafana:latest
+    container_name: agentforge-grafana
     ports:
       - "3002:3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-agentforge_grafana}
-      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SECURITY_ADMIN_PASSWORD: agentforge2026
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
-      - grafanadata:/var/lib/grafana
+      - agentforge_grafana:/var/lib/grafana
     depends_on:
-      - prometheus
+      - agentforge-prometheus
+    restart: unless-stopped
+    networks:
+      - agentforge-net
 
 volumes:
-  pgdata:
-    driver: local
-  redisdata:
-    driver: local
-  prometheusdata:
-    driver: local
-  grafanadata:
-    driver: local
+  agentforge_postgres:
+  agentforge_redis:
+  agentforge_prometheus:
+  agentforge_grafana:
+
+networks:
+  agentforge-net:
+    driver: bridge
