@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379"
 
     # ── Server ─────────────────────────────────────────────────────────
-    environment: Literal["development", "staging", "production"] = "development"
+    environment: Literal["development", "staging", "production", "test"] = "development"
     port: int = 8000
     log_level: str = "INFO"
 

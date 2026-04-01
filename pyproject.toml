@@ -1,3 +1,18 @@
+[project]
+name = "agentforge"
+version = "0.1.0"
+description = "Distributed AI Agent Runtime"
+requires-python = ">=3.12"
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = ["venv", "frontend", ".git", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]

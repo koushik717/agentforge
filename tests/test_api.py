@@ -2,31 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import pytest
-import pytest_asyncio
-from httpx import ASGITransport, AsyncClient
-
-# Set test env vars before importing app
-os.environ.setdefault(
-    "DATABASE_URL", "postgresql://agentforge:agentforge123@localhost:5432/agentforge"
-)
-os.environ.setdefault("REDIS_URL", "redis://localhost:6379")
-os.environ.setdefault("ENVIRONMENT", "test")
-
-
-@pytest_asyncio.fixture
-async def client():
-    """Create an async test client with full app lifespan."""
-    from main import create_app
-
-    app = create_app()
-
-    async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test",
-    ) as ac:
-        yield ac
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
@@ -131,3 +108,21 @@ async def test_metrics(client: AsyncClient):
     resp = await client.get("/metrics")
     assert resp.status_code == 200
     assert "agentforge_http_requests_total" in resp.text
+
+
+@pytest.mark.asyncio
+async def test_list_tools(client: AsyncClient):
+    """Tools endpoint returns available tools."""
+    resp = await client.get("/api/v1/tools")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "tools" in data
+
+
+@pytest.mark.asyncio
+async def test_list_providers(client: AsyncClient):
+    """Providers endpoint returns registered providers."""
+    resp = await client.get("/api/v1/providers")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "providers" in data

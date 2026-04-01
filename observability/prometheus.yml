@@ -4,5 +4,5 @@ global:
 scrape_configs:
   - job_name: agentforge-api
     static_configs:
-      - targets: ["agentforge-api:8000"]
+      - targets: ["api:8000"]
     metrics_path: /metrics

@@ -16,8 +16,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ruff
-      - run: ruff check .
-      - run: ruff format --check .
+      - run: ruff check . --exclude venv --exclude frontend
+      - run: ruff format --check . --exclude venv --exclude frontend
 
   test:
     name: Test
@@ -58,6 +58,7 @@ jobs:
           DATABASE_URL: postgresql://agentforge:agentforge123@localhost:5432/agentforge_test
           REDIS_URL: redis://localhost:6379
           ENVIRONMENT: test
+          GROQ_API_KEY: test_key
         run: python -m pytest tests/ -v --tb=short
 
   docker:

@@ -1,6 +1,10 @@
 import { usePolling } from '../hooks';
 import { api } from '../api';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const BACKEND_BASE = API_BASE.replace('/api/v1', '');
+const GRAFANA_URL = import.meta.env.VITE_GRAFANA_URL || 'http://localhost:3001';
+
 export default function Sidebar({ currentPage, onNavigate }) {
   const { data: health } = usePolling(() => api.health(), 10000);
 
@@ -43,7 +47,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
         <div className="nav-section-label">System</div>
         <a
           className="nav-item"
-          href="http://localhost:8000/docs"
+          href={`${BACKEND_BASE}/docs`}
           target="_blank"
           rel="noopener"
         >
@@ -52,7 +56,7 @@ export default function Sidebar({ currentPage, onNavigate }) {
         </a>
         <a
           className="nav-item"
-          href="http://localhost:3001"
+          href={GRAFANA_URL}
           target="_blank"
           rel="noopener"
         >
