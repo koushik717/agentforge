@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentforge-api
+  labels:
+    app: agentforge
+    component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agentforge
+      component: api
+  template:
+    metadata:
+      labels:
+        app: agentforge
+        component: api
+    spec:
+      containers:
+        - name: api
+          image: agentforge:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: agentforge-config
+            - secretRef:
+                name: agentforge-secrets
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentforge-worker
+  labels:
+    app: agentforge
+    component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentforge
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: agentforge
+        component: worker
+    spec:
+      containers:
+        - name: worker
+          image: agentforge:latest
+          command: ["python", "-m", "runtime.worker"]
+          envFrom:
+            - configMapRef:
+                name: agentforge-config
+            - secretRef:
+                name: agentforge-secrets
+          resources:
+            requests:
+              cpu: 500m
+              memory: 256Mi
+            limits:
+              cpu: 2000m
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentforge-api
+  labels:
+    app: agentforge
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: agentforge
+    component: api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agentforge-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: agentforge.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: agentforge-api
+                port:
+                  number: 8000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agentforge-config
+data:
+  ENVIRONMENT: "production"
+  PORT: "8000"
+  LOG_LEVEL: "INFO"
+  DEFAULT_PROVIDER: "groq"
+  DEFAULT_MODEL: "llama-3.3-70b-versatile"
+  OLLAMA_BASE_URL: "http://ollama:11434/v1"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: agentforge-secrets
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql://agentforge:agentforge123@postgres:5432/agentforge"
+  REDIS_URL: "redis://redis:6379"
+  GROQ_API_KEY: "your_groq_key_here"
+  GEMINI_API_KEY: "your_gemini_key_here"
+  OPENAI_API_KEY: "your_openai_key_here"
