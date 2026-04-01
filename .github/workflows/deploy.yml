@@ -30,6 +30,6 @@ jobs:
           script: |
             cd /opt/agentforge
             git pull origin main
-            docker compose -f docker-compose.prod.yml up -d --build --force-recreate agentforge-api agentforge-worker
+            docker-compose -f docker-compose.prod.yml up -d --build --force-recreate agentforge-api agentforge-worker
             sleep 10
             curl -f http://localhost:8002/api/v1/health && echo "Deploy successful" || echo "Health check failed"
