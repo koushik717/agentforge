@@ -60,7 +60,7 @@ jobs:
           script: |
             cd /opt/agentforge || { mkdir -p /opt/agentforge && cd /opt/agentforge && git clone https://github.com/koushik717/agentforge.git .; }
             git pull origin main
-            docker compose -f docker-compose.prod.yml up -d --build --force-recreate
+            docker-compose -f docker-compose.prod.yml up -d --build --force-recreate
             echo "Waiting for services to start..."
             sleep 15
             for i in 1 2 3 4 5; do
@@ -73,5 +73,5 @@ jobs:
               sleep 5
             done
             echo "Health check failed after 5 attempts"
-            docker compose -f docker-compose.prod.yml logs --tail=50 agentforge-api
+            docker-compose -f docker-compose.prod.yml logs --tail=50 agentforge-api
             exit 1
