@@ -5,7 +5,6 @@ Entry point for the FastAPI application.
 
 from __future__ import annotations
 
-import time
 from contextlib import asynccontextmanager
 
 import structlog
@@ -22,7 +21,12 @@ from observability import configure_logging, RequestLoggingMiddleware
 from observability.metrics import MetricsMiddleware, metrics_endpoint
 from runtime.engine import AgentEngine
 from runtime.llm import LLMRegistry
-from runtime.llm.providers import GeminiProvider, GroqProvider, OllamaProvider, OpenAIProvider
+from runtime.llm.providers import (
+    GeminiProvider,
+    GroqProvider,
+    OllamaProvider,
+    OpenAIProvider,
+)
 from tools import ToolRegistry
 from tools.calculator import Calculator
 from tools.web_search import WebSearchTool
@@ -89,7 +93,9 @@ async def lifespan(app: FastAPI):
     tool_registry.register(Calculator())
 
     # Initialize engine
-    engine = AgentEngine(llm_registry=llm_registry, tool_registry=tool_registry.as_dict())
+    engine = AgentEngine(
+        llm_registry=llm_registry, tool_registry=tool_registry.as_dict()
+    )
 
     # Inject dependencies into routes
     init_routes(db, redis_client, settings, engine, tool_registry, llm_registry)

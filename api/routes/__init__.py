@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timezone
 from uuid import UUID
 
 import structlog
@@ -14,7 +13,6 @@ from api.models import (
     AgentCreate,
     AgentListResponse,
     AgentResponse,
-    ErrorResponse,
     HealthResponse,
     RunCreate,
     RunListResponse,
@@ -35,7 +33,9 @@ _tool_registry = None
 _llm_registry = None
 
 
-def init_routes(db, redis, settings, engine=None, tool_registry=None, llm_registry=None) -> None:
+def init_routes(
+    db, redis, settings, engine=None, tool_registry=None, llm_registry=None
+) -> None:
     """Inject dependencies into the routes module."""
     global _db, _redis, _settings, _start_time, _engine, _tool_registry, _llm_registry
     _db = db
@@ -178,7 +178,10 @@ async def create_run(body: RunCreate) -> RunResponse:
 
     # Publish run event to Redis for worker processing
     if _redis:
-        await _redis.publish("agent:runs", json.dumps({"run_id": str(row["id"]), "agent_id": str(body.agent_id)}))
+        await _redis.publish(
+            "agent:runs",
+            json.dumps({"run_id": str(row["id"]), "agent_id": str(body.agent_id)}),
+        )
 
     logger.info("run.created", run_id=str(row["id"]), agent_id=str(body.agent_id))
     return _row_to_run(row)
@@ -261,7 +264,9 @@ async def list_runs(
             limit,
             offset,
         )
-        total = await _db.fetchval("SELECT COUNT(*) FROM runs WHERE agent_id = $1", agent_id)
+        total = await _db.fetchval(
+            "SELECT COUNT(*) FROM runs WHERE agent_id = $1", agent_id
+        )
     else:
         rows = await _db.fetch(
             "SELECT * FROM runs ORDER BY created_at DESC LIMIT $1 OFFSET $2",

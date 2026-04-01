@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any, Callable
+from typing import Any
 
 import structlog
 
@@ -18,7 +18,9 @@ MAX_TOOL_ITERATIONS = 10
 class AgentEngine:
     """Executes agent runs: sends prompts to LLMs, handles tool calls, returns results."""
 
-    def __init__(self, llm_registry: LLMRegistry, tool_registry: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, llm_registry: LLMRegistry, tool_registry: dict[str, Any] | None = None
+    ) -> None:
         self._llm = llm_registry
         self._tools: dict[str, Any] = tool_registry or {}
 
@@ -94,8 +96,15 @@ class AgentEngine:
                     tool_result = await self._execute_tool(tool_name, tool_args)
 
                     # Feed result back to LLM
-                    messages.append(LLMMessage(role="assistant", content=response.content))
-                    messages.append(LLMMessage(role="user", content=f"Tool result for {tool_name}:\n{tool_result}\n\nNow provide your final answer based on this information."))
+                    messages.append(
+                        LLMMessage(role="assistant", content=response.content)
+                    )
+                    messages.append(
+                        LLMMessage(
+                            role="user",
+                            content=f"Tool result for {tool_name}:\n{tool_result}\n\nNow provide your final answer based on this information.",
+                        )
+                    )
                     total_tokens += response.tokens_used
                     continue
 
@@ -114,14 +123,20 @@ class AgentEngine:
 
             # Process tool calls
             # Add assistant message with tool calls
-            messages.append(LLMMessage(role="assistant", content="", tool_calls=response.tool_calls))
+            messages.append(
+                LLMMessage(role="assistant", content="", tool_calls=response.tool_calls)
+            )
 
             for tool_call in response.tool_calls:
                 tool_name = tool_call["name"]
                 tool_args_str = tool_call.get("arguments", "{}")
 
                 try:
-                    tool_args = json.loads(tool_args_str) if isinstance(tool_args_str, str) else tool_args_str
+                    tool_args = (
+                        json.loads(tool_args_str)
+                        if isinstance(tool_args_str, str)
+                        else tool_args_str
+                    )
                 except json.JSONDecodeError:
                     tool_args = {}
 
@@ -167,7 +182,8 @@ class AgentEngine:
             pass
         # Try to extract JSON from markdown code blocks
         import re
-        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
+
+        json_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", content, re.DOTALL)
         if json_match:
             try:
                 data = json.loads(json_match.group(1))

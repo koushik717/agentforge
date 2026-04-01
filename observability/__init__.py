@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import sys
 import time
-from typing import Any
 
 import structlog
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -67,7 +66,9 @@ def configure_logging(log_level: str = "INFO", json_output: bool = True) -> None
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware that logs every HTTP request with method, path, status, and latency."""
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         logger = structlog.get_logger("http")
         start = time.perf_counter()
 

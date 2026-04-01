@@ -28,7 +28,9 @@ class Settings(BaseSettings):
     default_model: str = "llama-3.3-70b-versatile"
 
     # ── Infrastructure ─────────────────────────────────────────────────
-    database_url: str = "postgresql://agentforge:agentforge123@localhost:5432/agentforge"
+    database_url: str = (
+        "postgresql://agentforge:agentforge123@localhost:5432/agentforge"
+    )
     redis_url: str = "redis://localhost:6379"
 
     # ── Server ─────────────────────────────────────────────────────────

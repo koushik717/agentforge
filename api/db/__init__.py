@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
+
 from typing import Any
 
 import asyncpg
@@ -46,7 +45,9 @@ CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at DESC);
 class Database:
     """Async PostgreSQL client backed by an asyncpg connection pool."""
 
-    def __init__(self, dsn: str, *, min_size: int = 2, max_size: int = 10, timeout: float = 30.0) -> None:
+    def __init__(
+        self, dsn: str, *, min_size: int = 2, max_size: int = 10, timeout: float = 30.0
+    ) -> None:
         self._dsn = dsn
         self._min_size = min_size
         self._max_size = max_size

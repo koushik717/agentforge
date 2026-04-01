@@ -274,7 +274,9 @@ class GeminiProvider(LLMProvider):
                 history.append({"role": "model", "parts": [m.content]})
 
         # Use generate_content for simplicity
-        full_prompt = f"{system_instruction}\n\n{prompt}" if system_instruction else prompt
+        full_prompt = (
+            f"{system_instruction}\n\n{prompt}" if system_instruction else prompt
+        )
         response = await asyncio.to_thread(
             gen_model.generate_content,
             full_prompt,
@@ -327,7 +329,9 @@ class OllamaProvider(OpenAIProvider):
             import httpx
 
             async with httpx.AsyncClient() as client:
-                resp = await client.get(self._client.base_url.rstrip("/v1") + "/api/tags", timeout=5.0)
+                resp = await client.get(
+                    self._client.base_url.rstrip("/v1") + "/api/tags", timeout=5.0
+                )
                 return resp.status_code == 200
         except Exception:
             return False

@@ -8,7 +8,9 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 # Set test env vars before importing app
-os.environ.setdefault("DATABASE_URL", "postgresql://agentforge:agentforge123@localhost:5432/agentforge")
+os.environ.setdefault(
+    "DATABASE_URL", "postgresql://agentforge:agentforge123@localhost:5432/agentforge"
+)
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379")
 os.environ.setdefault("ENVIRONMENT", "test")
 

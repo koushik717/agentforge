@@ -5,8 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 import signal
-import sys
-import time
 
 import structlog
 
@@ -16,7 +14,12 @@ from api.db.cache import RedisClient
 from observability import configure_logging
 from runtime.engine import AgentEngine
 from runtime.llm import LLMRegistry
-from runtime.llm.providers import GeminiProvider, GroqProvider, OllamaProvider, OpenAIProvider
+from runtime.llm.providers import (
+    GeminiProvider,
+    GroqProvider,
+    OllamaProvider,
+    OpenAIProvider,
+)
 from tools import ToolRegistry
 from tools.calculator import Calculator
 from tools.web_search import WebSearchTool
@@ -57,11 +60,20 @@ class Worker:
 
         # LLM Registry
         llm_registry = LLMRegistry()
-        if self.settings.groq_api_key and self.settings.groq_api_key != "your_groq_key_here":
+        if (
+            self.settings.groq_api_key
+            and self.settings.groq_api_key != "your_groq_key_here"
+        ):
             llm_registry.register(GroqProvider(api_key=self.settings.groq_api_key))
-        if self.settings.gemini_api_key and self.settings.gemini_api_key != "your_gemini_key_here":
+        if (
+            self.settings.gemini_api_key
+            and self.settings.gemini_api_key != "your_gemini_key_here"
+        ):
             llm_registry.register(GeminiProvider(api_key=self.settings.gemini_api_key))
-        if self.settings.openai_api_key and self.settings.openai_api_key != "your_openai_key_here":
+        if (
+            self.settings.openai_api_key
+            and self.settings.openai_api_key != "your_openai_key_here"
+        ):
             llm_registry.register(OpenAIProvider(api_key=self.settings.openai_api_key))
         llm_registry.register(OllamaProvider(base_url=self.settings.ollama_base_url))
 
@@ -71,7 +83,9 @@ class Worker:
         tool_registry.register(Calculator())
 
         # Engine
-        self.engine = AgentEngine(llm_registry=llm_registry, tool_registry=tool_registry.as_dict())
+        self.engine = AgentEngine(
+            llm_registry=llm_registry, tool_registry=tool_registry.as_dict()
+        )
 
         # Start consuming
         self._running = True
@@ -90,7 +104,9 @@ class Worker:
 
         try:
             while self._running:
-                message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+                message = await pubsub.get_message(
+                    ignore_subscribe_messages=True, timeout=1.0
+                )
                 if message and message["type"] == "message":
                     data = json.loads(message["data"])
                     run_id = data.get("run_id")
@@ -108,7 +124,9 @@ class Worker:
 
         try:
             # Get agent config
-            agent = await self.db.fetchrow("SELECT * FROM agents WHERE id = $1", agent_id)
+            agent = await self.db.fetchrow(
+                "SELECT * FROM agents WHERE id = $1", agent_id
+            )
             if not agent:
                 logger.error("worker.agent_not_found", agent_id=agent_id)
                 return
@@ -162,7 +180,9 @@ class Worker:
             )
 
         except Exception as e:
-            logger.error("worker.run_failed", run_id=run_id, error=str(e), exc_info=True)
+            logger.error(
+                "worker.run_failed", run_id=run_id, error=str(e), exc_info=True
+            )
             await self.db.execute(
                 "UPDATE runs SET status = 'failed', error = $2 WHERE id = $1",
                 run_id,

@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import time
 
-from prometheus_client import Counter, Gauge, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import (
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+    CONTENT_TYPE_LATEST,
+)
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import Response
@@ -60,7 +66,9 @@ DB_POOL_SIZE = Gauge(
 class MetricsMiddleware(BaseHTTPMiddleware):
     """Track request count, latency, and active connections."""
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         # Skip metrics endpoint to avoid recursion
         if request.url.path == "/metrics":
             return await call_next(request)

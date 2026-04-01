@@ -56,7 +56,9 @@ class ToolRegistry:
 
     def list_tools(self) -> list[dict[str, str]]:
         """List all available tools."""
-        return [{"name": t.name, "description": t.description} for t in self._tools.values()]
+        return [
+            {"name": t.name, "description": t.description} for t in self._tools.values()
+        ]
 
     def as_dict(self) -> dict[str, BaseTool]:
         """Return the internal dict for engine registration."""

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 
 import redis.asyncio as aioredis
 import structlog
@@ -64,11 +63,13 @@ class RedisClient:
     async def set_json(self, key: str, data: dict, *, ttl: int | None = None) -> None:
         """Serialize a dict to JSON and store it."""
         import json
+
         await self.set(key, json.dumps(data), ttl=ttl)
 
     async def get_json(self, key: str) -> dict | None:
         """Retrieve and deserialize a JSON value."""
         import json
+
         raw = await self.get(key)
         return json.loads(raw) if raw else None
 

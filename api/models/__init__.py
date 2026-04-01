@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -29,16 +28,24 @@ class HealthResponse(BaseModel):
 class AgentCreate(BaseModel):
     """Request body for creating a new agent."""
 
-    name: str = Field(..., min_length=1, max_length=255, examples=["Research Assistant"])
-    description: str = Field("", max_length=2000, examples=["An agent that helps with research tasks"])
+    name: str = Field(
+        ..., min_length=1, max_length=255, examples=["Research Assistant"]
+    )
+    description: str = Field(
+        "", max_length=2000, examples=["An agent that helps with research tasks"]
+    )
     system_prompt: str = Field(
         "You are a helpful assistant.",
         max_length=10000,
-        examples=["You are a research assistant. Help the user find and summarize information."],
+        examples=[
+            "You are a research assistant. Help the user find and summarize information."
+        ],
     )
     provider: str = Field("groq", examples=["groq", "gemini", "openai", "ollama"])
     model: str = Field("llama-3.3-70b-versatile", examples=["llama-3.3-70b-versatile"])
-    tools: list[str] = Field(default_factory=list, examples=[["web_search", "calculator"]])
+    tools: list[str] = Field(
+        default_factory=list, examples=[["web_search", "calculator"]]
+    )
 
 
 class AgentResponse(BaseModel):
@@ -69,7 +76,9 @@ class RunCreate(BaseModel):
     """Request body for creating a new run."""
 
     agent_id: UUID
-    input: str = Field(..., min_length=1, max_length=50000, examples=["What is quantum computing?"])
+    input: str = Field(
+        ..., min_length=1, max_length=50000, examples=["What is quantum computing?"]
+    )
 
 
 class RunResponse(BaseModel):
